@@ -1,56 +1,50 @@
-name: New API 自动签到
+name: New API 批量自动签到
 
 on:
-  # 每天定时触发（UTC 时间，北京时间 = UTC+8）
-  # 默认：北京时间 06:00 签到
   schedule:
-    - cron: '0 22 * * *'   # 北京时间 06:00
-    # - cron: '0 14 * * *'  # 北京时间 22:00（如需修改请取消注释并注释上一行）
-
-  # 允许手动触发
+    - cron: '0 22 * * *'
+    # - cron: '0 14 * * *'
   workflow_dispatch:
 
 jobs:
   checkin:
     runs-on: ubuntu-latest
-
-    timeout-minutes: 10
+    timeout-minutes: 30
 
     steps:
-      - name: 📥 检出代码
+      - name: 检出代码
         uses: actions/checkout@v4
 
-      - name: 🐍 设置 Python 环境
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: 🔤 安装 Tesseract OCR（中英文识别）
+      - name: 安装 Tesseract OCR
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y tesseract-ocr tesseract-ocr-chi-sim
           tesseract --version
-          tesseract --list-langs
 
-      - name: 📦 安装 Python 依赖
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           playwright install --with-deps chromium
 
-      - name: 🎯 执行签到脚本
+      - name: 执行签到
         id: checkin
         env:
-          NEWAPI_URL:        ${{ secrets.NEWAPI_URL }}
-          NEWAPI_USERNAME:   ${{ secrets.NEWAPI_USERNAME }}
-          NEWAPI_PASSWORD:   ${{ secrets.NEWAPI_PASSWORD }}
-          NEWAPI_COOKIE:     ${{ secrets.NEWAPI_COOKIE }}
+          NEWAPI_URLS:       ${{ secrets.NEWAPI_URLS }}
+          NEWAPI_USERNAMES:  ${{ secrets.NEWAPI_USERNAMES }}
+          NEWAPI_PASSWORDS:  ${{ secrets.NEWAPI_PASSWORDS }}
+          NEWAPI_COOKIES:    ${{ secrets.NEWAPI_COOKIES }}
           TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python checkin.py
 
-      - name: 📸 上传截图（无论成功失败）
+      - name: 上传截图
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -58,7 +52,7 @@ jobs:
           path: screenshots/
           retention-days: 7
 
-      - name: 📊 输出签到结果
+      - name: 输出结果
         if: always()
         run: |
           echo "签到结果：${{ steps.checkin.outputs.checkin_result || '未知' }}"

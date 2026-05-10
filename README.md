@@ -277,21 +277,15 @@ stunning-potato/
 
 ## 📦 依赖
 
-<div align="center">
-
-| 📦 依赖 | 📝 描述 | 🔗 链接 | 必需 |
-|:---|:---|:---|:---:|:---:|
+| 依赖 | 描述 | 链接 | 必需 |
+|:---|:---|:---:|:---:|
 | **Python 3.11+** | 编程语言 | [🔗](https://www.python.org/) | ✅ |
 | **Playwright** | Chromium 无头浏览器 | [🔗](https://playwright.dev/python/) | ✅ |
-| **pytesseract** | OCR 文字识别 | [🔗](https://github.com/madmaze/pytesseract) | ✅ |
+| **pytesseract** | OCR 文字识别（需系统安装 Tesseract OCR） | [🔗](https://github.com/madmaze/pytesseract) | ✅ |
 | **OpenCV** | 模板匹配 | [🔗](https://opencv.org/) | ❌ |
-| **Tesseract OCR** | 中文语言包 | [🔗](https://github.com/tesseract-ocr/tesseract) | ✅ |
 
-</div>
+> **💡 提示**：GitHub Actions 环境已自动安装所有依赖（包括 Tesseract OCR 中文语言包），无需手动配置！
 
-> **💡 提示**：GitHub Actions 环境已自动安装所有依赖，无需手动配置！
-
----
 
 ## 🐛 故障排除
 
@@ -404,7 +398,7 @@ Released under the [MIT License](LICENSE)
 Made with ❤️ by [@alone8198](https://github.com/alone8198)
 
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=flat&logo=github&logoColor=white)](https://github.com/alone8198)
-[![Email](https://img.shields.io/badge/Email-D14836?style=flat&logo=gmail&logoColor=white)](mailto:your-email@example.com)
+[![Email](https://img.shields.io/badge/Email-D14836?style=flat&logo=gmail&logoColor=white)](mailto:alone819888@outlook.com)
 
 [⬆ 回到顶部](#-stunning-potato)
 

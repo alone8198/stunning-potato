@@ -7,7 +7,6 @@ Env vars:
   NEWAPI_URLS        URLs, one per line
   NEWAPI_USERNAMES   Usernames, one per line (aligned with URLs)
   NEWAPI_PASSWORDS   Passwords, one per line (aligned with URLs)
-  NEWAPI_COOKIES     Cookies, one per line (aligned with URLs, priority over user/pass)
   TELEGRAM_TOKEN     Telegram Bot Token (optional)
   TELEGRAM_CHAT_ID  Telegram Chat ID (optional)
 """
@@ -81,86 +80,65 @@ def parse_lines(env_name):
     return lines
 
 
-async def checkin_one(page, url, ck, username, password, idx):
+async def checkin_one(page, url, username, password, idx):
     prefix = "[#" + str(idx) + "] "
     print("\n" + "=" * 50)
     print(prefix + "URL: " + url)
     print("=" * 50)
 
-    use_cookie = bool(ck.strip())
-    use_password = bool(username and password)
-
-    if not use_cookie and not use_password:
-        print(prefix + "[ERROR] No cookie or username/password, skipping")
+    if not username or not password:
+        print(prefix + "[ERROR] Username or password is empty, skipping")
         return False
 
-    # Login
-    if use_cookie:
-        from urllib.parse import urlparse
-        domain = urlparse(url).hostname or "localhost"
-        cookies = []
-        for pair in ck.split(";"):
-            pair = pair.strip()
-            if "=" not in pair:
+    # Login with username and password
+    login_url = url.rstrip("/") + "/login"
+    print(prefix + "[Login] Opening: " + login_url)
+    await page.goto(login_url, timeout=30000, wait_until="networkidle")
+    await asyncio.sleep(2)
+
+    sd = Path("screenshots")
+    await page.screenshot(path=str(sd / ("login_" + str(idx) + ".png")))
+
+    try:
+        await page.fill("input[name='username'], input[placeholder*='user'], input[type='text']:visible", username, timeout=5000)
+        await page.fill("input[name='password'], input[placeholder*='pass'], input[type='password']:visible", password, timeout=5000)
+        print(prefix + "[Login] Form filled")
+    except Exception as e:
+        print(prefix + "[ERROR] Fill form failed: " + str(e))
+        return False
+
+    await asyncio.sleep(1)
+    await page.screenshot(path=str(sd / ("login_filled_" + str(idx) + ".png")))
+
+    # Click login button: OCR -> DOM
+    clicked = False
+    if HAS_OCR:
+        await page.screenshot(path="temp_login.png")
+        matches = ocr_find_text("temp_login.png", ["Login", "Sign in", "Sign in", "Login"])
+        if matches:
+            x, y, w, h, _ = matches[0]
+            await page.mouse.click(x + w // 2, y + h // 2)
+            clicked = True
+            print(prefix + "[Login] [OCR] Clicked login button")
+
+    if not clicked:
+        for sel in ["button[type='submit']", "button:has-text('Login')", "button:has-text('Sign in')", "input[type='submit']"]:
+            try:
+                btn = await page.query_selector(sel)
+                if btn:
+                    await btn.click()
+                    clicked = True
+                    print(prefix + "[Login] [DOM] Clicked: " + sel)
+                    break
+            except Exception:
                 continue
-            name, _, value = pair.partition("=")
-            cookies.append({
-                "name": name.strip(),
-                "value": value.strip(),
-                "domain": domain,
-                "path": "/",
-            })
-        await page.context.add_cookies(cookies)
-        print(prefix + "[Login] Cookie injected (" + str(len(cookies)) + " items)")
-    else:
-        login_url = url.rstrip("/") + "/login"
-        print(prefix + "[Login] Opening: " + login_url)
-        await page.goto(login_url, timeout=30000, wait_until="networkidle")
-        await asyncio.sleep(2)
 
-        sd = Path("screenshots")
-        await page.screenshot(path=str(sd / ("login_" + str(idx) + ".png")))
+    if not clicked:
+        print(prefix + "[ERROR] Cannot find login button")
+        return False
 
-        try:
-            await page.fill("input[name='username'], input[placeholder*='user'], input[type='text']:visible", username, timeout=5000)
-            await page.fill("input[name='password'], input[placeholder*='pass'], input[type='password']:visible", password, timeout=5000)
-            print(prefix + "[Login] Form filled")
-        except Exception as e:
-            print(prefix + "[ERROR] Fill form failed: " + str(e))
-            return False
-
-        await asyncio.sleep(1)
-        await page.screenshot(path=str(sd / ("login_filled_" + str(idx) + ".png")))
-
-        # Click login button: OCR -> DOM
-        clicked = False
-        if HAS_OCR:
-            await page.screenshot(path="temp_login.png")
-            matches = ocr_find_text("temp_login.png", ["Login", "Sign in", "Sign in", "Login"])
-            if matches:
-                x, y, w, h, _ = matches[0]
-                await page.mouse.click(x + w // 2, y + h // 2)
-                clicked = True
-                print(prefix + "[Login] [OCR] Clicked login button")
-
-        if not clicked:
-            for sel in ["button[type='submit']", "button:has-text('Login')", "button:has-text('Sign in')", "input[type='submit']"]:
-                try:
-                    btn = await page.query_selector(sel)
-                    if btn:
-                        await btn.click()
-                        clicked = True
-                        print(prefix + "[Login] [DOM] Clicked: " + sel)
-                        break
-                except Exception:
-                    continue
-
-        if not clicked:
-            print(prefix + "[ERROR] Cannot find login button")
-            return False
-
-        await asyncio.sleep(3)
-        await page.screenshot(path=str(sd / ("after_login_" + str(idx) + ".png")))
+    await asyncio.sleep(3)
+    await page.screenshot(path=str(sd / ("after_login_" + str(idx) + ".png")))
 
     # Go to personal page
     personal_url = url.rstrip("/") + "/console/personal"
@@ -175,7 +153,7 @@ async def checkin_one(page, url, ck, username, password, idx):
     # Check login status
     pwd_input = await page.query_selector("input[type='password']")
     if pwd_input:
-        print(prefix + "[ERROR] Not logged in! Cookie may be expired.")
+        print(prefix + "[ERROR] Not logged in! Login failed.")
         await page.screenshot(path=str(sd / ("error_not_logged_in_" + str(idx) + ".png")))
         return False
 
@@ -249,7 +227,6 @@ async def main():
     urls = parse_lines("NEWAPI_URLS")
     usernames = parse_lines("NEWAPI_USERNAMES")
     passwords = parse_lines("NEWAPI_PASSWORDS")
-    cookies = parse_lines("NEWAPI_COOKIES")
 
     total = len(urls)
     if total == 0:
@@ -264,7 +241,6 @@ async def main():
 
     usernames = align(usernames, total)
     passwords = align(passwords, total)
-    cookies = align(cookies, total)
 
     print("=" * 60)
     print("  New API Batch Auto Checkin (OCR + OpenCV)")
@@ -293,7 +269,7 @@ async def main():
             page = await ctx.new_page()
             Path("screenshots").mkdir(exist_ok=True)
 
-            ok = await checkin_one(page, urls[i], cookies[i], usernames[i], passwords[i], i + 1)
+            ok = await checkin_one(page, urls[i], usernames[i], passwords[i], i + 1)
             results.append((i + 1, urls[i], ok))
 
             await ctx.close()

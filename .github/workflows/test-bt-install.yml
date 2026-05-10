@@ -42,10 +42,10 @@ jobs:
           # 根据操作系统选择安装脚本
           if [ "${{ github.event.inputs.os_type }}" = "ubuntu" ] || [ "${{ github.event.inputs.os_type }}" = "debian" ]; then
             echo "使用 Ubuntu/Debian 安装脚本"
-            wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh
+            sudo wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh
           elif [ "${{ github.event.inputs.os_type }}" = "centos" ]; then
             echo "使用 CentOS 安装脚本"
-            wget -O install.sh https://download.bt.cn/install/install_6.0.sh
+            sudo wget -O install.sh https://download.bt.cn/install/install_6.0.sh
           else
             echo "不支持的操作系统"
             exit 1

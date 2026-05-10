@@ -12,7 +12,6 @@
 [![Stars](https://img.shields.io/github/stars/alone8198/stunning-potato?style=social)](https://github.com/alone8198/stunning-potato/stargazers)
 [![Forks](https://img.shields.io/github/forks/alone8198/stunning-potato?style=social)](https://github.com/alone8198/stunning-potato/network/members)
 [![Issues](https://img.shields.io/github/issues/alone8198/stunning-potato?style=social)](https://github.com/alone8198/stunning-potato/issues)
-[![License]([https://img.shields.io/github/license/alone8198/stunning-potato?style=social)](LICENSE)
 
 </div>
 

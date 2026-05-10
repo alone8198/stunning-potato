@@ -1,0 +1,139 @@
+name: 测试宝塔面板安装
+
+on:
+  workflow_dispatch:
+    inputs:
+      os_type:
+        description: '操作系统类型'
+        required: true
+        default: 'ubuntu'
+        type: choice
+        options:
+          - ubuntu
+          - debian
+          - centos
+
+jobs:
+  install_bt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: 📂 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 🔧 准备安装环境
+        run: |
+          echo "::group::系统信息"
+          uname -a
+          cat /etc/os-release || true
+          echo "::endgroup::"
+          
+          echo "::group::网络信息"
+          curl -s ifconfig.me || true
+          echo "::endgroup::"
+      
+      - name: 🛡️ 安装宝塔面板
+        id: install
+        timeout-minutes: 20
+        run: |
+          echo "::group::开始安装宝塔面板"
+          
+          # 根据操作系统选择安装脚本
+          if [ "${{ github.event.inputs.os_type }}" = "ubuntu" ] || [ "${{ github.event.inputs.os_type }}" = "debian" ]; then
+            echo "使用 Ubuntu/Debian 安装脚本"
+            wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh
+          elif [ "${{ github.event.inputs.os_type }}" = "centos" ]; then
+            echo "使用 CentOS 安装脚本"
+            wget -O install.sh https://download.bt.cn/install/install_6.0.sh
+          else
+            echo "不支持的操作系统"
+            exit 1
+          fi
+          
+          # 执行安装（自动模式）
+          echo "y" | bash install.sh
+          
+          echo "::endgroup::"
+        continue-on-error: true
+      
+      - name: 📋 获取宝塔面板信息
+        if: always()
+        run: |
+          echo "::group::宝塔面板信息"
+          
+          # 尝试获取面板信息
+          if [ -f /www/server/panel/data/admin_path.pl ]; then
+            echo "面板地址: http://$(curl -s ifconfig.me):8888$(cat /www/server/panel/data/admin_path.pl)"
+          fi
+          
+          if [ -f /www/server/panel/data/default.db ]; then
+            echo "尝试获取默认账号密码..."
+            # 宝塔会将信息保存在 /www/server/panel/data/default.db
+          fi
+          
+          # 执行 bt 命令获取信息
+          if command -v bt &> /dev/null; then
+            echo "执行 bt 14 查看面板信息..."
+            bt 14 || true
+          fi
+          
+          echo "::endgroup::"
+        continue-on-error: true
+      
+      - name: 💾 保存凭据（尝试）
+        if: always()
+        run: |
+          echo "::group::保存凭据"
+          
+          # 创建凭据文件
+          mkdir -p bt_credentials
+          
+          # 保存面板地址
+          if [ -f /www/server/panel/data/admin_path.pl ]; then
+            echo "http://$(curl -s ifconfig.me):8888$(cat /www/server/panel/data/admin_path.pl)" > bt_credentials/panel_url.txt
+          fi
+          
+          # 保存默认密码（如果有）
+          if [ -f /www/server/panel/data/default.db ]; then
+            cp /www/server/panel/data/default.db bt_credentials/ || true
+          fi
+          
+          # 保存系统信息
+          echo "服务器IP: $(curl -s ifconfig.me)" > bt_credentials/server_info.txt
+          echo "安装时间: $(date)" >> bt_credentials/server_info.txt
+          echo "操作系统: ${{ github.event.inputs.os_type }}" >> bt_credentials/server_info.txt
+          
+          echo "凭据已保存到 bt_credentials/ 目录"
+          ls -la bt_credentials/
+          
+          echo "::endgroup::"
+        continue-on-error: true
+      
+      - name: 📤 上传凭据
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bt-credentials
+          path: bt_credentials/
+          retention-days: 30
+      
+      - name: 📊 输出安装结果
+        if: always()
+        run: |
+          echo "## 🛡️ 宝塔面板安装结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 安装状态" >> $GITHUB_STEP_SUMMARY
+          echo "- 操作系统: ${{ github.event.inputs.os_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 安装时间: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️ 重要提示" >> $GITHUB_STEP_SUMMARY
+          echo "1. GitHub Actions 环境是临时的，工作流结束后虚拟机会被销毁" >> $GITHUB_STEP_SUMMARY
+          echo "2. 宝塔面板安装完成后无法访问（没有固定 IP）" >> $GITHUB_STEP_SUMMARY
+          echo "3. 凭据已保存到 Artifacts，可下载查看" >> $GITHUB_STEP_SUMMARY
+          echo "4. 建议在自己的服务器上安装宝塔面板" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 下一步" >> $GITHUB_STEP_SUMMARY
+          echo "1. 下载 Artifacts 查看凭据" >> $GITHUB_STEP_SUMMARY
+          echo "2. 在自己的服务器上手动安装宝塔面板" >> $GITHUB_STEP_SUMMARY
+          echo "3. 或使用 SSH 部署工作流远程安装到你的服务器" >> $GITHUB_STEP_SUMMARY

@@ -6,8 +6,6 @@
 
 使用 Playwright + OCR + OpenCV 视觉识别自动完成每日签到
 
-[![GitHub Stars](https://img.shields.io/github/stars/alone8198/stunning-potato?style=social)](https://github.com/alone8198/stunning-potato)
-[![License](https://img.shields.io/github/license/alone8198/stunning-potato?style=flat&color=blue)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11+-green?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Auto%20Checkin-brightgreen?style=flat&logo=github-actions&logoColor=white)](https://github.com/alone8198/stunning-potato/actions)
 
@@ -273,9 +271,13 @@ stunning-potato/
 
 ## ⭐ Star History
 
-如果你觉得这个项目有用，请给它一个 Star ⭐
-
-[![Star History Chart](https://api.star-history.com/svg?repos=alone8198/stunning-potato&type=Date)](https://star-history.com/#alone8198/stunning-potato&Date)
+<a href="https://www.star-history.com/?type=date&repos=alone8198%2Fstunning-potato">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=alone8198/stunning-potato&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=alone8198/stunning-potato&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=alone8198/stunning-potato&type=date&legend=top-left" />
+ </picture>
+</a>
 
 ---
 

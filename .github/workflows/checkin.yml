@@ -38,7 +38,6 @@ jobs:
           NEWAPI_URLS:       ${{ secrets.NEWAPI_URLS }}
           NEWAPI_USERNAMES:  ${{ secrets.NEWAPI_USERNAMES }}
           NEWAPI_PASSWORDS:  ${{ secrets.NEWAPI_PASSWORDS }}
-          NEWAPI_COOKIES:    ${{ secrets.NEWAPI_COOKIES }}
           TELEGRAM_TOKEN:    ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |

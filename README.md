@@ -6,7 +6,7 @@ New API 自动签到脚本 —— 使用 Playwright + OCR + OpenCV 视觉识别�
 
 - **视觉识别签到**：使用 Tesseract OCR 识别页面文字，自动定位并点击签到按钮
 - **模板匹配**（可选）：在 `templates/` 目录下放置按钮截图，用 OpenCV 进行模板匹配点击
-- **双登录方式**：支持 Cookie 登录（推荐）和账号密码登录
+- **账号密码登录**：使用用户名和密码自动登录
 - **多关键词兼容**：自动识别"签到"、"打卡"、"Check in"等多种按钮文字
 - **失败自动截图**：截图存档保留 7 天，方便调试
 - **Telegram 通知**（可选）：签到完成后推送消息
@@ -24,25 +24,15 @@ New API 自动签到脚本 —— 使用 Playwright + OCR + OpenCV 视觉识别�
 
 | Secret 名称 | 说明 | 必填 |
 |---|---|---|
-| `NEWAPI_URL` | New API 地址（如 `https://api.xxx.com`） | ✅ |
-| `NEWAPI_COOKIE` | 浏览器 Cookie 字符串 | ✅（二选一）|
-| `NEWAPI_USERNAME` | 账号（密码登录方式） | ✅（二选一）|
-| `NEWAPI_PASSWORD` | 密码（密码登录方式） | ✅（二选一）|
+| `NEWAPI_URLS` | New API 地址，一行一个 | ✅ |
+| `NEWAPI_USERNAMES` | 账号，一行一个，行数对应 URL | ✅ |
+| `NEWAPI_PASSWORDS` | 密码，一行一个，行数对应 URL | ✅ |
 | `TELEGRAM_TOKEN` | Telegram Bot Token | ❌ |
 | `TELEGRAM_CHAT_ID` | Telegram Chat ID | ❌ |
 
-> **推荐使用 Cookie 方式**（更稳定，Cookie 过期才需要更新）。
+### 3. 手动触发测试
 
-### 3. 获取 Cookie 方法
-
-1. 浏览器打开 New API 页面并登录
-2. 按 `F12` → `Application` → `Cookies` → 选择你的域名
-3. 复制所有 Cookie（格式：`name1=value1; name2=value2; ...`）
-4. 粘贴到 `NEWAPI_COOKIE` Secret
-
-### 4. 手动触发测试
-
-进入 `Actions` 标签页 → 选择 `New API 自动签到` → `Run workflow`
+进入 `Actions` 标签页 → 选择 `New API 批量自动签到` → `Run workflow`
 
 ---
 
@@ -66,12 +56,13 @@ New API 自动签到脚本 —— 使用 Playwright + OCR + OpenCV 视觉识别�
 
 ```
 1. 启动 Playwright Chromium 无头浏览器
-2. 注入 Cookie（或填写账号密码登录）
-3. 访问 /console/personal 个人页面
-4. 对整个页面截图
-5. 用 Tesseract OCR 识别截图中的文字
-6. 找到"签到"/"打卡"等关键词的坐标，模拟鼠标点击
-7. 截图存档，发送 Telegram 通知（可选）
+2. 访问登录页面，填写用户名和密码
+3. 点击登录按钮（OCR 识别 + DOM 选择器）
+4. 访问 /console/personal 个人页面
+5. 对整个页面截图
+6. 用 Tesseract OCR 识别截图中的文字
+7. 找到"签到"/"打卡"等关键词的坐标，模拟鼠标点击
+8. 截图存档，发送 Telegram 通知（可选）
 ```
 
 **降级策略**：OCR 失败 → OpenCV 模板匹配 → DOM 选择器，三层保障。
@@ -82,7 +73,7 @@ New API 自动签到脚本 —— 使用 Playwright + OCR + OpenCV 视觉识别�
 
 - 进入 `Actions` 标签页查看运行日志
 - 点击任意运行记录 → `Artifacts` → 下载 `checkin-screenshots.zip`（保留 7 天）
-- 截图文件：`01_login_page.png` ~ `06_result.png`，方便排查问题
+- 截图文件：`login_1.png`、`personal_1.png`、`result_1.png` 等，方便排查问题
 
 ---
 

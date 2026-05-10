@@ -2,7 +2,7 @@ name: New API 批量自动签到
 
 on:
   schedule:
-    - cron: '0 22 * * *'
+    - cron: '0 23 * * *'
     # - cron: '0 14 * * *'
   workflow_dispatch:
 
